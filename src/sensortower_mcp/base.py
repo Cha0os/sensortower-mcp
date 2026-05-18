@@ -81,6 +81,10 @@ class SensorTowerTool:
     async def make_request(self, endpoint: str, params: Dict[str, Any]) -> Any:
         """Make authenticated request to Sensor Tower API with retries and backoff."""
         params["auth_token"] = self.get_auth_token()
+        # Sensor Tower's API rejects requests that carry cookies. httpx.AsyncClient
+        # persists Set-Cookie values across calls by default, so a cookie set by one
+        # response poisons every subsequent request on the same client.
+        self.client.cookies.clear()
         backoff_seconds = 0.5
         max_attempts = 5
         for attempt_index in range(max_attempts):
