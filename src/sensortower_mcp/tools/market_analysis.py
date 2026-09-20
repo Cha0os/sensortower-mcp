@@ -95,8 +95,17 @@ class MarketAnalysisTools(SensorTowerTool):
                 "data_model": data_model,
             }
 
+            # This endpoint requires device_type on ios ("iphone"/"ipad"/"total") and
+            # unified ("total"), but rejects it outright on android.
+            if os_value == "android":
+                resolved_device_type = None
+            elif device_type:
+                resolved_device_type = device_type
+            else:
+                resolved_device_type = "total"
+
             optional_params = {
-                "device_type": device_type,
+                "device_type": resolved_device_type,
                 "end_date": end_value,
                 "offset": offset,
                 "custom_fields_filter_id": custom_fields_filter_id,

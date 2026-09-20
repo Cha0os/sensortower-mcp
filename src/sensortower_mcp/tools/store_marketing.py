@@ -146,19 +146,37 @@ class StoreMarketingTools(SensorTowerTool):
                 str,
                 Field(description="ISO country code", min_length=2, max_length=2),
             ] = "US",
+            limit: Annotated[
+                Optional[int],
+                Field(description="Maximum keywords to return", ge=1, default=None),
+            ] = None,
+            offset: Annotated[
+                Optional[int],
+                Field(description="Offset for pagination", ge=0, default=None),
+            ] = None,
+            devices: Annotated[
+                Optional[str],
+                Field(description="Comma-separated devices (iOS only)", default=None),
+            ] = None,
         ) -> dict:
             """Get current keyword rankings for an app."""
 
             os_value = validate_os_parameter(os, ["ios", "android"])
             params = {
-                "app_id": app_id,
-                "country": country,
+                "bundle": "aso_top_keywords",
+                "breakdown": "keyword",
+                "os": os_value,
+                "app_ids": app_id,
+                "regions": country,
             }
+            if limit is not None:
+                params["limit"] = limit
+            if offset is not None:
+                params["offset"] = offset
+            if devices:
+                params["devices"] = devices
 
-            return await self.make_request(
-                f"/v1/{os_value}/keywords/get_current_keywords",
-                params,
-            )
+            return await self.make_request("/v1/facets/metrics", params)
 
         @self.tool(
             mcp,
@@ -246,28 +264,21 @@ class StoreMarketingTools(SensorTowerTool):
                 str,
                 Field(description="ISO country code", min_length=2, max_length=2),
             ],
-            app_id: Annotated[
-                Optional[int],
-                Field(description="App ID for ranking prediction (iOS only)", default=None),
-            ] = None,
-            page: Annotated[
-                Optional[int],
-                Field(description="Page number for pagination", ge=1, default=None),
+            devices: Annotated[
+                Optional[str],
+                Field(description="Comma-separated devices (iOS only)", default=None),
             ] = None,
         ) -> dict:
-            """Retrieve keyword research metadata including related terms and difficulty."""
+            """Retrieve the apps ranking for a keyword, with traffic and difficulty scores."""
 
             os_value = validate_os_parameter(os, ["ios", "android"])
             params = {
-                "term": term,
-                "country": country,
+                "bundle": "aso_keyword_research",
+                "os": os_value,
+                "keywords": term,
+                "regions": country,
             }
-            if app_id is not None:
-                params["app_id"] = app_id
-            if page is not None:
-                params["page"] = page
+            if devices:
+                params["devices"] = devices
 
-            return await self.make_request(
-                f"/v1/{os_value}/keywords/research_keyword",
-                params,
-            )
+            return await self.make_request("/v1/facets/metrics", params)

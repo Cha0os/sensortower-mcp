@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """App Analysis API tools for Sensor Tower MCP Server."""
 
+from datetime import date
 from typing import Annotated, Literal, Optional, Union
 
 from fastmcp import FastMCP
@@ -552,21 +553,23 @@ class AppAnalysisTools(SensorTowerTool):
 
             os_value = validate_os_parameter(os, ["ios", "android", "unified"])
             start_value = validate_date_format(start_date)
-            actual_end_value = validate_date_format(end_date) if end_date else "2024-01-31"
+            actual_end_value = (
+                validate_date_format(end_date) if end_date else date.today().isoformat()
+            )
 
             params = {
+                "bundle": "retention",
+                "breakdown": "app",
+                "os": os_value,
                 "app_ids": app_ids,
                 "date_granularity": date_granularity,
                 "start_date": start_value,
                 "end_date": actual_end_value,
             }
             if country:
-                params["country"] = country
+                params["regions"] = country
 
-            return await self.make_request(
-                f"/v1/{os_value}/usage/retention",
-                params,
-            )
+            return await self.make_request("/v1/facets/metrics", params)
 
         @self.tool(
             mcp,
@@ -644,7 +647,9 @@ class AppAnalysisTools(SensorTowerTool):
 
             os_value = validate_os_parameter(os, ["ios", "android", "unified"])
             start_value = validate_date_format(start_date)
-            actual_end_value = validate_date_format(end_date) if end_date else "2024-01-31"
+            actual_end_value = (
+                validate_date_format(end_date) if end_date else date.today().isoformat()
+            )
 
             params = {
                 "app_ids": app_ids,
